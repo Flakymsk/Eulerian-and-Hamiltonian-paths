@@ -1,0 +1,1 @@
+typedef Graph = List<List<int>>;

@@ -1,4 +1,4 @@
-import 'graph_base.dart';
+typedef Graph = List<List<int>>;
 
 
 Set<int> _findPendantVertices(Graph g){
@@ -52,4 +52,23 @@ List<int> findHamiltonianPath(Graph g) {
     }
 
   return [];
+}
+
+
+
+void main(){
+  final Graph _myGraph = [
+    [1, 2],
+    [0, 2],
+    [0, 1, 3, 4],
+    [2, 4],
+    [2, 3],
+  ];
+
+  print('--- Тестирование алгоритма нахождения пути Гамильтона ---');
+
+  final path = findHamiltonianPath(_myGraph);
+  
+  print('Найденный Гамильтонов путь: $path');
+  
 }
