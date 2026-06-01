@@ -1,55 +1,70 @@
 import 'graph_base.dart';
 
+class HamiltonianResult {
+  final List<int> animationPath;
+  final List<List<int>> allCycles;
+  final List<List<int>> allPaths;
 
-Set<int> _findPendantVertices(Graph g){
-  final pedantVertices = <int>{};
-  for (int i = 0; i < g.length; ++i){
-    if (g[i].length == 1){ 
-      pedantVertices.add(i);
-      if (pedantVertices.length > 2){
-        throw ArgumentError('Граф содержит более 2 висячих вершин. Гамильтонов путь невозможен.');
-      }
-    }
-    else if (g[i].isEmpty){
-      throw ArgumentError('Граф содержит изолированную вершину $i. Гамильтонов путь невозможен.');
-    }
-  }
-  return pedantVertices;
+  HamiltonianResult({
+    required this.animationPath,
+    required this.allCycles,
+    required this.allPaths,
+  });
 }
-
-
-List<int> findHamiltonianPath(Graph g) {
-  final pendants = _findPendantVertices(g);
+HamiltonianResult findHamiltonianPath(Graph g) {
+  final allCycles = <List<int>>[];
+  final allPaths = <List<int>>[];
   final visited = <int>{};
 
-  final startVertices = pendants.isNotEmpty? List.from(pendants) : List.generate(g.length, (int i) => i);
+  // Метод поиска из КОНКРЕТНОЙ стартовой вершины
+  void findAll(int current, int startVertex) {
+    visited.add(current);
 
-  bool dfs(int vertex){
-    visited.add(vertex);
-
-    if (visited.length == g.length){
-      return true;
-    }
-
-    for (int v in g[vertex]){
-      if (!visited.contains(v)){
-        if (dfs(v)){
-          return true;
+    if (visited.length == g.length) {
+      // Базовый случай: посетили все вершины графа!
+      final currentRoute = List<int>.from(visited);
+      
+      // ПРОВЕРКА НА ЗАМЫКАНИЕ ЦИКЛА: 
+      if (g[current].contains(startVertex)) {
+        // Если замыкается — добавляем старт в конец для красивого кольца на холсте
+        currentRoute.add(startVertex);
+        allCycles.add(currentRoute);
+      } else {
+        // Если не замыкается — это просто честный Гамильтонов ПУТЬ
+        allPaths.add(currentRoute);
+      }
+    } else {
+      // Шагаем вглубь по соседям
+      for (int vertex in g[current]) {
+        if (!visited.contains(vertex)) {
+          findAll(vertex, startVertex);
         }
       }
     }
 
-    visited.remove(vertex);
-    return false;
+    // Бэктрекинг: освобождаем вершину для других веток перебора
+    visited.remove(current);
   }
 
-  for (int vertex in startVertices){
-      visited.clear();
-
-      if (dfs(vertex)){
-        return visited.toList();
-      }
+  // Запускаем перебор из КАЖДОЙ вершины графа, чтобы найти ВСЕ возможные варианты
+  for (int start = 0; start < g.length; start++) {
+    // Пропускаем изолированные индексы удаленных вершин, если они есть
+    if (g[start].isNotEmpty || g.any((neighbors) => neighbors.contains(start))) {
+      findAll(start, start);
     }
+  }
 
-  return [];
+  // ВЫБОР ПРИОРИТЕТНОГО МАРШРУТА ДЛЯ АНИМАЦИИ:
+  List<int> bestPath = [];
+  if (allCycles.isNotEmpty) {
+    bestPath = allCycles.first; // 1. Если есть ЦИКЛ — он в приоритете!
+  } else if (allPaths.isNotEmpty) {
+    bestPath = allPaths.first;  // 2. Если циклов нет — берем первый найденный ПУТЬ
+  }
+
+  return HamiltonianResult(
+    animationPath: bestPath,
+    allCycles: allCycles,
+    allPaths: allPaths,
+  );
 }
