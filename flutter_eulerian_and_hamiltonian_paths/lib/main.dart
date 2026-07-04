@@ -40,6 +40,13 @@ class _ThemeAppState extends State<ThemeApp> {
   final Set<int> _pastVertices = {};
   final Set<String> _visitedEdges = {};
 
+  void _resetAnimationState() {
+  _activeVertex = null;
+  _pastVertices.clear();
+  _visitedEdges.clear();
+  }
+
+
   void _showRoutesBottomSheet(BuildContext innerContext) {
     showModalBottomSheet(
       context: innerContext,
@@ -339,6 +346,7 @@ Widget build(BuildContext context) {
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       onChanged: (value) => setState(() => _animationSpeedMs = int.tryParse(value) ?? 0),
                       decoration: const InputDecoration(
+                        labelStyle: TextStyle(color: Colors.white),
                         labelText: 'Cкорость анимации, мс',
                       ),
                     ),
@@ -438,7 +446,7 @@ Widget build(BuildContext context) {
                             left: vertex.position.dx - 25,
                             top: vertex.position.dy - 25,
                             child: GestureDetector(
-                              onTap: () {
+                              onTapDown: (details) {
                                 if (_currentMode == CanvasMode.editGraph) {
                                   if (_selectedVertexId == null) {
                                     setState(() => _selectedVertexId = vertex.id);
@@ -446,6 +454,8 @@ Widget build(BuildContext context) {
                                     setState(() => _selectedVertexId = null);
                                   } else {
                                     setState(() {
+                                      _resetAnimationState();
+
                                       if (!_myGraph[_selectedVertexId!].contains(vertex.id)) {
                                         _myGraph[_selectedVertexId!].add(vertex.id);
                                         _myGraph[vertex.id].add(_selectedVertexId!);
